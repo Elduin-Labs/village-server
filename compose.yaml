@@ -1,0 +1,45 @@
+name: village-server
+
+services:
+  minecraft:
+    image: itzg/minecraft-server:latest
+    environment:
+      EULA: "TRUE"
+      TYPE: VANILLA
+      VERSION: "1.21.11"
+      # Docker on this Mac only has about 2 GB, so the server gets a bit
+      # over half of it and the website gets the rest.
+      MEMORY: 1200M
+      MOTD: "Village Server - a beautiful village with everything you need"
+      DIFFICULTY: normal
+      MODE: survival
+      SPAWN_PROTECTION: 0
+      VIEW_DISTANCE: 8
+      SIMULATION_DISTANCE: 6
+      ENABLE_RCON: "true"
+      # The website asks the server questions over RCON every couple of
+      # seconds. Don't spam those into the chat of anyone who is an op.
+      BROADCAST_RCON_TO_OPS: "false"
+    volumes:
+      - mc-data:/data
+    restart: unless-stopped
+
+  # One port does both jobs: Minecraft joins on localhost:23377,
+  # and opening http://localhost:23377 in a browser shows the website.
+  site:
+    build: ./site
+    environment:
+      MC_HOST: minecraft
+      MC_VERSION: "1.21.11"
+    ports:
+      - "23377:23377"
+    volumes:
+      - mc-data:/data:ro
+      - site-data:/state
+    depends_on:
+      - minecraft
+    restart: unless-stopped
+
+volumes:
+  mc-data:
+  site-data:
